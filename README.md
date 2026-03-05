@@ -1,29 +1,32 @@
-# lab2-sql-murder-AndersonRua
+# lab2-sql-asesinato-andersonrua1508
 
 ## Datos
 
 * **Detective**: Anderson Rua
 * **Correo**: anderson.rua@udea.edu.co
+* **Usuario GitHub**: andersonrua1508
 
-## Resumen del Caso
+## Resumen del caso
 
-Se investigó el asesinato ocurrido el 15 de enero de 2018 en SQL City utilizando consultas SQL sobre la base de datos del caso. A partir del reporte inicial del crimen se identificaron dos testigos, se revisaron sus entrevistas y se siguieron varias pistas hasta encontrar al asesino. Finalmente se descubrió también quién ordenó el crimen.
+Se investigó el asesinato ocurrido el 2018-01-15 en SQL City. A través de una serie de consultas a la base de datos se logró identificar primero a Jeremy Bowers como el ejecutor material del crimen, y posteriormente a Miranda Priestly como el cerebro detrás de todo el plan.
 
-## Bitácora de Investigación
+## Bitácora de investigación
 
 ### Query 1
 
 ```sql
-SELECT * 
-FROM crime_scene_report 
-WHERE date = 20180115 
-AND city = 'SQL City' 
-AND type = 'murder';
+SELECT *
+FROM crime_scene_report
+WHERE date = 20180115
+  AND city = 'SQL City'
+  AND type = 'murder';
 ```
 
-#### Conclusión
+**Evidencia**
 
-El reporte indica que hay dos testigos: uno vive en la última casa de Northwestern Dr y otro llamado Annabel vive en Franklin Ave.
+![Paso 1](evidencia/1.png)
+
+> Conclusión: hay 2 testigos; uno vive en la última casa de Northwestern Dr; el otro es Annabel en Franklin Ave.
 
 ### Query 2
 
@@ -35,9 +38,11 @@ ORDER BY address_number DESC
 LIMIT 1;
 ```
 
-#### Conclusión
+**Evidencia**
 
-Se identifica al testigo Morty Schapiro.
+![Paso 2](evidencia/2.png)
+
+> Conclusión: el testigo 1 es Morty Schapiro (id 14887).
 
 ### Query 3
 
@@ -45,66 +50,116 @@ Se identifica al testigo Morty Schapiro.
 SELECT *
 FROM person
 WHERE name LIKE '%Annabel%'
-AND address_street_name = 'Franklin Ave';
+  AND address_street_name = 'Franklin Ave';
 ```
 
-#### Conclusión
+**Evidencia**
 
-Se identifica a la testigo Annabel Miller.
+![Paso 3](evidencia/3.png)
+
+> Conclusión: el testigo 2 es Annabel Miller (id 16371).
 
 ### Query 4
 
 ```sql
 SELECT *
 FROM interview
-WHERE person_id IN (14887,16371);
+WHERE person_id = 14887;
 ```
 
-#### Conclusión
+**Evidencia**
 
-Las entrevistas revelan que el sospechoso es miembro del gimnasio Get Fit Now con membresía Gold y un ID que empieza por 48Z.
+![Paso 4](evidencia/4.png)
+
+> Conclusión: vio a un hombre con bolsa “Get Fit Now”, miembro GOLD, id empieza por “48Z”, y placa contiene “H42W”.
 
 ### Query 5
 
 ```sql
 SELECT *
-FROM get_fit_now_member
-WHERE membership_status = 'gold'
-AND id LIKE '48Z%';
+FROM interview
+WHERE person_id = 16371;
 ```
 
-#### Conclusión
+**Evidencia**
 
-Se encuentran dos posibles sospechosos.
+![Paso 5](evidencia/5.png)
+
+> Conclusión: reconoció al asesino en su gimnasio el 9 de enero.
 
 ### Query 6
 
 ```sql
 SELECT *
-FROM get_fit_now_check_in
-WHERE check_in_date = 20180109
-AND membership_id IN ('48Z7A','48Z55');
+FROM get_fit_now_member
+WHERE membership_status = 'gold'
+  AND id LIKE '48Z%';
 ```
 
-#### Conclusión
+**Evidencia**
 
-Ambos sospechosos estuvieron en el gimnasio el día indicado.
+![Paso 6](evidencia/6.png)
+
+> Conclusión: sospechosos: 48Z7A (Joe Germuska, person_id 28819) y 48Z55 (Jeremy Bowers, person_id 67318).
 
 ### Query 7
 
 ```sql
-SELECT p.id, p.name, dl.plate_number
-FROM person p
-JOIN drivers_license dl
-ON p.license_id = dl.id
-WHERE p.id IN (28819,67318);
+SELECT *
+FROM drivers_license
+WHERE plate_number LIKE '%H42W%';
 ```
 
-#### Conclusión
+**Evidencia**
 
-El sospechoso identificado es Jeremy Bowers.
+![Paso 7](evidencia/7.png)
+
+> Conclusión: aparecen 3 licencias candidatas por placa parcial.
 
 ### Query 8
+
+```sql
+SELECT p.id, p.name, dl.id AS license_db_id, dl.plate_number, dl.car_make, dl.car_model
+FROM person p
+JOIN drivers_license dl ON dl.id = p.license_id
+WHERE p.id IN (28819, 67318);
+```
+
+**Evidencia**
+
+![Paso 8](evidencia/8.png)
+
+> Conclusión: Jeremy Bowers coincide con la placa 0H42W2.
+
+### Query 9
+
+```sql
+SELECT *
+FROM get_fit_now_check_in
+WHERE check_in_date = 20180109
+  AND membership_id IN ('48Z7A', '48Z55');
+```
+
+**Evidencia**
+
+![Paso 9](evidencia/9.png)
+
+> Conclusión: ambos estuvieron ese día; pero por placa el asesino es Jeremy.
+
+### Query 10
+
+```sql
+INSERT INTO solution VALUES (1, 'Jeremy Bowers');
+SELECT value FROM solution;
+```
+
+**Evidencia**
+
+![Paso 10](evidencia/10.png)
+
+> Conclusión: confirma el asesino y pide buscar al “cerebro” detrás.
+
+### Query 11
 
 ```sql
 SELECT *
@@ -112,49 +167,75 @@ FROM interview
 WHERE person_id = 67318;
 ```
 
-#### Conclusión
+**Evidencia**
 
-Jeremy Bowers confiesa que fue contratado por una mujer con cabello rojo, que mide entre 1.65 y 1.70 y conduce un Tesla Model S.
+![Paso 11](evidencia/11.png)
 
-### Query 9
+> Conclusión: fue contratado por mujer con mucho dinero; mide 65–67 pulgadas, pelirroja, Tesla Model S; asistió 3 veces al SQL Symphony Concert en dic-2017.
+
+### Query 12
 
 ```sql
 SELECT *
 FROM drivers_license
 WHERE gender = 'female'
-AND hair_color = 'red'
-AND height BETWEEN 65 AND 67
-AND car_make = 'Tesla'
-AND car_model = 'Model S';
+  AND hair_color = 'red'
+  AND height BETWEEN 65 AND 67
+  AND car_make = 'Tesla'
+  AND car_model = 'Model S';
 ```
 
-#### Conclusión
+**Evidencia**
 
-Se identifican varias posibles sospechosas.
+![Paso 12](evidencia/12.png)
 
-### Query 10
+> Conclusión: salen 3 candidatas (ids de licencia: 202298, 291182, 918773).
+
+### Query 13
 
 ```sql
-SELECT person_id, COUNT(*)
+SELECT person_id, COUNT(*) AS veces
 FROM facebook_event_checkin
 WHERE event_name = 'SQL Symphony Concert'
-AND date LIKE '201712%'
+  AND date LIKE '201712%'
 GROUP BY person_id
 HAVING COUNT(*) >= 3;
 ```
 
-#### Conclusión
+**Evidencia**
 
-Dos personas asistieron tres veces al concierto.
+![Paso 13](evidencia/13.png)
 
-### Query 11
+> Conclusión: person_id 24556 y 99716 fueron 3 veces.
+
+### Query 14
 
 ```sql
 SELECT *
 FROM person
-WHERE id IN (24556,99716);
+WHERE id IN (24556, 99716);
 ```
 
-#### Conclusión
+**Evidencia**
 
-La mente maestra detrás del crimen es Miranda Priestly.
+![Paso 14](evidencia/14.png)
+
+> Conclusión: Bryan Pardo (24556) y Miranda Priestly (99716). Solo Miranda encaja con la licencia 202298 (de Query 12).
+
+### Query 15
+
+```sql
+INSERT INTO solution VALUES (1, 'Miranda Priestly');
+SELECT value FROM solution;
+```
+
+**Evidencia**
+
+![Paso 15](evidencia/15.png)
+
+> Conclusión: confirma que ella es el “cerebro” detrás del crimen.
+
+## Conclusión final
+
+* **Asesino (ejecutor):** Jeremy Bowers
+* **Cerebro detrás:** Miranda Priestly
